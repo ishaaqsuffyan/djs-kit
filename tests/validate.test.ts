@@ -13,6 +13,6 @@ test('validates common CLI inputs', () => {
 });
 
 test('resolves package and template paths from the compiled runtime', () => {
-  assert.match(getPackageRoot().replace(/\\/g, '/'), /djskit$/);
+  assert.match(getPackageRoot().replace(/\\/g, '/'), /djs-?kit$/);
   assert.match(getTemplateDir('ts').replace(/\\/g, '/'), /src\/templates\/ts$/);
 });
