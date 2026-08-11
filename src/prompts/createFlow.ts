@@ -7,13 +7,15 @@ import {
   group,
   spinner,
   cancel,
+  confirm,
   isCancel,
 } from '@clack/prompts';
 import pc from 'picocolors';
 import { validateToken } from '../utils/discord.js';
 import { isValidSnowflake, isValidPrefix } from '../utils/validate.js';
 import { log } from '../utils/logger.js';
-import type { CreateOptions } from '../types.js';
+import { erlcFlow } from './erlcFlow.js';
+import type { CreateOptions, ErlcOptions } from '../types.js';
 
 export async function createFlow(projectName: string): Promise<CreateOptions> {
   intro(pc.bold(pc.cyan('djs-kit')) + pc.dim(' — discord.js bot scaffolder'));
@@ -86,6 +88,7 @@ export async function createFlow(projectName: string): Promise<CreateOptions> {
             { value: 'moderation', label: 'Moderation', hint: 'Moderation commands and audit examples' },
             { value: 'tickets', label: 'Tickets', hint: 'Ticket command, buttons, and modal examples' },
             { value: 'community', label: 'Community', hint: 'Welcome/community management examples' },
+            { value: 'erlc', label: 'ER:LC', hint: 'ER:LC server integration with presets and slash commands' },
           ],
         }),
     },
@@ -111,6 +114,34 @@ export async function createFlow(projectName: string): Promise<CreateOptions> {
 
   s.stop(pc.green(`Validated — logged in as ${pc.bold(validation.username)}`));
 
+  const wantsErlc = answers.preset === 'erlc';
+  let erlcOptions: ErlcOptions | undefined;
+  if (answers.preset !== 'erlc') {
+    const addErlc = await confirm({
+      message: 'Add ER:LC server integration (players, presets, slash commands)?',
+      initialValue: false,
+    });
+    if (isCancel(addErlc)) {
+      cancel('Scaffolding cancelled.');
+      process.exit(0);
+    }
+    if (addErlc) {
+      log.step('Configuring ER:LC integration');
+      erlcOptions = await erlcFlow();
+      if (!erlcOptions) {
+        cancel('Scaffolding cancelled.');
+        process.exit(0);
+      }
+    }
+  } else {
+    log.step('Configuring ER:LC integration');
+    erlcOptions = await erlcFlow();
+    if (!erlcOptions) {
+      cancel('Scaffolding cancelled.');
+      process.exit(0);
+    }
+  }
+
   outro(pc.green('Options collected — scaffolding your bot!'));
 
   return {
@@ -124,5 +155,7 @@ export async function createFlow(projectName: string): Promise<CreateOptions> {
     prefix: answers.prefix as string,
     bare: answers.preset === 'bare',
     install: true,
+    erlc: wantsErlc || erlcOptions !== undefined,
+    erlcOptions,
   };
 }

@@ -57,6 +57,11 @@ export async function getRequiredEnv(projectRoot: string): Promise<string[]> {
 
   if (!/commandRegistration:\s*['"`]global['"`]/.test(config)) required.push('DISCORD_GUILD_ID');
   if (config.includes('DATABASE_URL')) required.push('DATABASE_URL');
+
+  const erlcConfigPath = join(projectRoot, 'src', 'erlc', 'config.ts');
+  const erlcJsConfigPath = join(projectRoot, 'src', 'erlc', 'config.js');
+  if (await pathExists(erlcConfigPath) || await pathExists(erlcJsConfigPath)) required.push('ERLC_SERVER_KEY');
+
   return required;
 }
 
@@ -150,6 +155,11 @@ export async function doctorProject(projectRoot: string): Promise<ToolIssue[]> {
 
   if (!pkg.scripts?.dev) issues.push({ level: 'warn', message: 'package.json is missing a dev script.' });
   if (!pkg.scripts?.['sync:commands']) issues.push({ level: 'info', message: 'package.json has no sync:commands script.' });
+
+  const erlcDirExists = await pathExists(join(projectRoot, 'src', 'erlc'));
+  if (erlcDirExists && !pkg.dependencies?.['@erlcjs/core']) {
+    issues.push({ level: 'error', message: 'src/erlc exists but @erlcjs/core is not installed. Run: npm install @erlcjs/core @erlcjs/presets @erlcjs/map' });
+  }
 
   return issues;
 }

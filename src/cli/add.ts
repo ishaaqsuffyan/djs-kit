@@ -6,6 +6,8 @@ import { generateSelectSnippet } from '../generators/snippets/select.js';
 import { generateEventSnippet } from '../generators/snippets/event.js';
 import { generateAutocompleteSnippet } from '../generators/snippets/autocomplete.js';
 import { generateContextSnippet } from '../generators/snippets/context.js';
+import { generateErlcModule } from '../generators/erlc.js';
+import { erlcFlow } from '../prompts/erlcFlow.js';
 import { log } from '../utils/logger.js';
 import type { ComponentType, CommandSubtype, ContextSubtype } from '../types.js';
 
@@ -55,5 +57,8 @@ export async function handleAdd(
       process.exit(1);
     }
     await generateContextSnippet(name, contextSubtype, lang, projectRoot);
+  } else if (componentType === 'erlc') {
+    const options = await erlcFlow({ projectRoot });
+    await generateErlcModule(projectRoot, { lang, options });
   }
 }
