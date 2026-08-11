@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import ts from 'typescript';
 
-const sourceRoot = path.resolve('src/templates/ts/src');
-const targetRoot = path.resolve('src/templates/js/src');
+const pairs = [
+  { src: path.resolve('src/templates/ts/src'), dest: path.resolve('src/templates/js/src') },
+  { src: path.resolve('src/templates/erlc/ts/src'), dest: path.resolve('src/templates/erlc/js/src') },
+];
 const workspaceRoot = path.resolve('.');
 
 function assertInsideWorkspace(target) {
@@ -43,8 +45,10 @@ function syncDir(src, dest) {
   }
 }
 
-assertInsideWorkspace(sourceRoot);
-assertInsideWorkspace(targetRoot);
-fs.rmSync(targetRoot, { recursive: true, force: true });
-syncDir(sourceRoot, targetRoot);
-console.log('JS template updated successfully.');
+for (const { src, dest } of pairs) {
+  assertInsideWorkspace(src);
+  assertInsideWorkspace(dest);
+  fs.rmSync(dest, { recursive: true, force: true });
+  syncDir(src, dest);
+}
+console.log('JS templates updated successfully.');

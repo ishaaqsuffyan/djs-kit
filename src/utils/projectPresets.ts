@@ -6,6 +6,7 @@ export const projectPresets: ProjectPreset[] = [
   'moderation',
   'tickets',
   'community',
+  'erlc',
 ];
 
 export function isProjectPreset(value: string): value is ProjectPreset {

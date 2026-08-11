@@ -1,0 +1,94 @@
+---
+title: ER:LC Integration
+description: Manage a Roblox Emergency Response: Liberty County server from your bot.
+---
+
+**djs-kit** can scaffold a full [ER:LC](https://www.roblox.com/games/2530920413/ER-LC-Emergency-Response-Liberty-County) (Emergency Response: Liberty County) server integration on top of your Discord bot. It wires up the [`@erlcjs/core`](https://erlcjs.xyz) API client, automation presets, live slash commands, a Discord event bridge, and an optional live map renderer.
+
+## Adding ER:LC
+
+### During project creation
+
+Choose the **ER:LC** starter preset in the interactive flow, or pass `--preset erlc` / `--erlc` non-interactively:
+
+```bash
+djs-kit create my-erlc-bot --lang ts --guild-id 123456789012345678 --preset erlc
+djs-kit create my-erlc-bot --lang ts --guild-id 123456789012345678 --erlc
+```
+
+The flow asks how the bot should receive ER:LC data, which automation presets to enable, and collects their options.
+
+### On an existing project
+
+```bash
+djs-kit add erlc
+```
+
+Running it again is safe — it updates `presets.config.*` and never duplicates env entries or the startup hook.
+
+## What gets generated
+
+| Path | Purpose |
+| --- | --- |
+| `src/erlc/config.ts` | Validates `ERLC_*` env vars |
+| `src/erlc/presets.config.ts` | Enables/disables presets and stores their options — **edit this to tune automation** |
+| `src/erlc/presets.ts` | Registers enabled presets on the ER:LC client |
+| `src/erlc/client.ts` | Creates the `@erlcjs/core` client (polling or webhook) |
+| `src/erlc/bridge.ts` | Forwards mod calls, emergency calls, and kills to your Discord log channel |
+| `src/erlc/index.ts` | `initErlc(client)` startup hook, wired into `src/index.*` |
+| `src/commands/slash/erlc/*` | `erlc-status`, `erlc-players`, `erlc-player`, `erlc-kick`, `erlc-ban`, `erlc-message`, `erlc-map` |
+| `src/components/buttons/erlcConfirm.ts` | Example button component for ER:LC actions |
+
+Dependencies added: `@erlcjs/core`, `@erlcjs/presets`, and `@erlcjs/map` (for the live map command).
+
+## Configuration
+
+Add these to your `.env` (already appended for you):
+
+```dotenv
+ERLC_SERVER_KEY=your_server_key_here
+ERLC_GLOBAL_KEY=
+ERLC_MODE=polling            # polling | webhook
+ERLC_POLLING_RATE_MS=5000    # minimum 500
+ERLC_WEBHOOK_PORT=3000
+ERLC_WEBHOOK_PATH=/webhook
+ERLC_WEBHOOK_SECRET=
+ERLC_LOG_CHANNEL_ID=         # Discord channel for event embeds
+```
+
+The integration only starts when `ERLC_SERVER_KEY` is set, so your bot runs fine without it.
+
+## Automation presets
+
+Presets are configured in `src/erlc/presets.config.ts`. Enabled presets are applied automatically on startup.
+
+| Preset | What it does | Key options |
+| --- | --- | --- |
+| `welcomePlayer` | Messages new players on join | `message` |
+| `banKickRejoin` | Bans players who rejoin quickly after a kick | `timespan` (seconds) |
+| `banCommand` | Punishes specific in-game commands | `commands`, `action`, `startsWith`, `allowlist` |
+| `banVehicles` | Restricts vehicle spawns and warns/kicks offenders | `vehicles`, `delay`, `allowlist` |
+| `banLiveries` | Restricts vehicle liveries | `liveries`, `delay`, `allowlist` |
+| `rdm` | Kicks or bans players reaching a kill threshold | `action`, `minKills`, `timespan`, `allowlist` |
+| `autoHint` | Sends an in-game hint on an interval | `message`, `interval` (ms) |
+| `autoAnnouncement` | Sends an in-game announcement on an interval | `message`, `interval` (ms) |
+| `autoCommand` | Runs an in-game command on an interval | `command`, `interval` (ms) |
+
+Allowlists accept Roblox user IDs and permission names (`mod`, `admin`, `owner`). Example:
+
+```ts
+banVehicles: {
+  enabled: true,
+  options: {
+    vehicles: ['Bugatti Veyron'],
+    delay: 15,
+    allowlist: [123456789, 'Server Owner'],
+  },
+},
+```
+
+## Notes
+
+- Polling mode needs no open ports. Webhook mode starts an HTTP server, so your host must be reachable on the configured port.
+- Player commands only see **online** players — the ER:LC API does not expose offline player data.
+- Vehicle name suggestions are loaded from your installed `@erlcjs/core` when you run `djs-kit add erlc`.

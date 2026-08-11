@@ -14,6 +14,7 @@ interface CreateCliOptions {
   prefix?: string;
   bare?: boolean;
   install?: boolean;
+  erlc?: boolean;
 }
 
 export async function handleCreate(
@@ -59,7 +60,7 @@ export async function handleCreate(
 
     const preset = options.bare ? 'bare' : (options.preset ?? 'utility');
     if (!isProjectPreset(preset)) {
-      log.error(`Invalid --preset "${options.preset}". Must be one of: bare, utility, moderation, tickets, community.`);
+      log.error(`Invalid --preset "${options.preset}". Must be one of: bare, utility, moderation, tickets, community, erlc.`);
       process.exit(1);
     }
 
@@ -74,6 +75,7 @@ export async function handleCreate(
       prefix: options.prefix ?? '!',
       bare: preset === 'bare',
       install: options.install ?? true,
+      erlc: Boolean(options.erlc || preset === 'erlc'),
     };
   }
 

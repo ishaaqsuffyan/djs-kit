@@ -5,6 +5,8 @@ import pc from 'picocolors';
 import { copyDir, interpolateDir } from '../utils/fs.js';
 import { getTemplateDir } from '../utils/paths.js';
 import { log } from '../utils/logger.js';
+import { defaultErlcOptions } from '../utils/erlc.js';
+import { generateErlcModule } from './erlc.js';
 import type { CreateOptions, DatabasePreset, ProjectPreset } from '../types.js';
 
 type JsonPackage = {
@@ -570,6 +572,14 @@ export async function generateProject(opts: CreateOptions): Promise<void> {
     '',
   ].join('\n');
   await writeFile(join(targetDir, '.env'), envContent, 'utf-8');
+
+  // Optional ER:LC server integration (via --erlc or the erlc preset)
+  if (opts.erlc || opts.preset === 'erlc') {
+    await generateErlcModule(targetDir, {
+      lang: opts.lang,
+      options: opts.erlcOptions ?? defaultErlcOptions(),
+    });
+  }
 
   log.success('Project files created!');
 

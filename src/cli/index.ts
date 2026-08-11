@@ -15,10 +15,11 @@ program
   .description('Scaffold a new discord.js bot project')
   .option('--lang <ts|js>', 'output language (ts or js) — omit to use interactive prompts')
   .option('--db <none|file|sqlite|postgres|mysql|mongo|redis>', 'database/storage preset', 'none')
-  .option('--preset <bare|utility|moderation|tickets|community>', 'starter project preset', 'utility')
+  .option('--preset <bare|utility|moderation|tickets|community|erlc>', 'starter project preset', 'utility')
   .option('--guild-id <id>', 'Discord guild ID to bake into config (required in non-interactive mode)')
   .option('--prefix <prefix>', 'default command prefix')
   .option('--bare', 'do not generate example commands and components')
+  .option('--erlc', 'include the ER:LC server integration (default preset config, all presets disabled)')
   .option('--no-install', 'skip running npm install after scaffold')
   .action(handleCreate);
 
@@ -76,6 +77,11 @@ addCmd
   .command('select <name>')
   .description('Generate a new select menu component')
   .action((name: string) => handleAdd('select', name, {}));
+
+addCmd
+  .command('erlc')
+  .description('Add the ER:LC server integration (module, presets, slash commands) to this project')
+  .action(() => handleAdd('erlc', '', {}));
 
 program
   .command('doctor')
